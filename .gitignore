@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.env*
+!dashboard/.env.example
+dashboard/out/
+dashboard/build/
+dashboard/.vercel/
+npm-debug.log*
