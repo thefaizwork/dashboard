@@ -1,10 +1,8 @@
 node_modules/
 .next/
-dashboard/node_modules/
-dashboard/.next/
-dashboard/.env*
-!dashboard/.env.example
-dashboard/out/
-dashboard/build/
-dashboard/.vercel/
+.env*
+!.env.example
+out/
+build/
+.vercel/
 npm-debug.log*

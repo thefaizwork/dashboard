@@ -87,10 +87,9 @@ function validResponseMessage(payload, fallback) {
   return fallback;
 }
 
+const BACKEND_URL = "http://localhost:9000/crawl";
+
 export default function Home() {
-  const [backendUrl, setBackendUrl] = useState("");
-  const [requestMethod, setRequestMethod] = useState("POST");
-  const [token, setToken] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [endpoints, setEndpoints] = useState([]);
   const [query, setQuery] = useState("");
@@ -111,27 +110,17 @@ export default function Home() {
 
   async function submitRequest(event) {
     event.preventDefault();
-    if (!isHttpUrl(backendUrl.trim())) {
-      setError("Enter a valid backend API URL, including https://");
-      return;
-    }
     if (!isHttpUrl(websiteUrl.trim())) {
-      setError("Enter a valid website URL to send to your backend.");
+      setError("Enter a valid website URL to scan, including https://");
       return;
     }
 
     setError("");
     setPending(true);
     try {
-      const target = new URL(backendUrl.trim());
-      const headers = token.trim() ? { Authorization: `Bearer ${token.trim()}` } : {};
-      const options = { method: requestMethod, headers };
-      if (requestMethod === "GET") {
-        target.searchParams.set("url", websiteUrl.trim());
-      } else {
-        headers["Content-Type"] = "application/json";
-        options.body = JSON.stringify({ url: websiteUrl.trim() });
-      }
+      const target = new URL(BACKEND_URL);
+      const headers = { "Content-Type": "application/json" };
+      const options = { method: "POST", headers, body: JSON.stringify({ url: websiteUrl.trim() }) };
 
       const response = await fetch(target, options);
       const raw = await response.text();
@@ -171,7 +160,7 @@ export default function Home() {
       setReportedTotal(documentedSeenCount + shadowListCount);
       setCoverage(Number.isFinite(coverageNumber) ? `${coverageNumber.toFixed(1)}%` : typeof coverageValue === "string" ? coverageValue : null);
       setLastHost(websiteHost);
-      setLastBackend(`${requestMethod} ${new URL(backendUrl.trim()).host}`);
+      setLastBackend(`POST ${new URL(BACKEND_URL).host}`);
       const shadowsFound = normalized.filter((endpoint) => endpoint.shadow).length;
       setToast(`Backend responded · ${shadowsFound} shadow API${shadowsFound === 1 ? "" : "s"} found`);
       window.setTimeout(() => setToast(""), 3200);
@@ -214,23 +203,13 @@ export default function Home() {
           <section className="collect-card" aria-labelledby="collect-title">
             <div className="collect-header"><div className="collect-icon" aria-hidden="true">↗</div><div><h2 id="collect-title">Connect your backend scanner</h2><p>Add your friend’s API endpoint, then send it a website to scan.</p></div></div>
             <form className="url-form" onSubmit={submitRequest}>
-              <div className="backend-fields">
-                <label className="field-label" htmlFor="backend-url">Backend API endpoint</label>
-                <div className="backend-row">
-                  <input id="backend-url" className="plain-input" type="url" placeholder="https://api.example.com/scan" autoComplete="url" value={backendUrl} onChange={(event) => setBackendUrl(event.target.value)} required />
-                  <select id="request-method" className="method-select" aria-label="Backend request method" value={requestMethod} onChange={(event) => setRequestMethod(event.target.value)}><option value="POST">POST</option><option value="GET">GET</option></select>
-                </div>
-                <label className="field-label token-label" htmlFor="backend-token">Bearer token <span>(optional)</span></label>
-                <input id="backend-token" className="plain-input token-input" type="password" placeholder="Paste token if your API requires one" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} />
-                <p className="request-hint">POST sends <code>{'{ "url": "…" }'}</code>; GET sends <code>?url=…</code>. Return JSON as <code>[]</code> or <code>{'{ "endpoints": [] }'}</code>. Token stays in this tab.</p>
-              </div>
               <div className="website-row">
                 <label className="url-input-wrap" htmlFor="website-url"><span aria-hidden="true" className="url-icon">⊕</span><input id="website-url" name="url" type="url" placeholder="https://website-to-scan.com" autoComplete="url" value={websiteUrl} onChange={(event) => setWebsiteUrl(event.target.value)} required /><span className="input-hint">Website to scan</span></label>
                 <button className="primary-button" type="submit" disabled={pending}><span className="button-icon" aria-hidden="true">{pending ? "◌" : "⌕"}</span> {pending ? "Waiting…" : "Send test request"}</button>
               </div>
             </form>
             {error && <p className="form-error" role="alert">{error}</p>}
-            {pending && <div className="progress-panel" aria-live="polite"><div className="progress-topline"><span className="progress-title"><span className="spinner" aria-hidden="true" /> <span>Waiting for {new URL(backendUrl).host}…</span></span></div><div className="progress-track"><div className="progress-fill indeterminate" /></div><p className="progress-help">Your backend is processing the scan. Results will appear here when it responds.</p></div>}
+            {pending && <div className="progress-panel" aria-live="polite"><div className="progress-topline"><span className="progress-title"><span className="spinner" aria-hidden="true" /> <span>Waiting for {new URL(BACKEND_URL).host}…</span></span></div><div className="progress-track"><div className="progress-fill indeterminate" /></div><p className="progress-help">Your backend is processing the scan. Results will appear here when it responds.</p></div>}
           </section>
 
           <section className="summary-grid" aria-label="Collection summary">
